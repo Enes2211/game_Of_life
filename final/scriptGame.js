@@ -25,14 +25,18 @@ function setup() {
 
 timer = 0;
 timerG = 0;
+timerPredator = 0;
 
+//check me zyshen pse sdel predatori
 function draw() {
-  frameRate(24);
+  frameRate(30);
   var side = 10;
   emptyCells = [];
   grassCells = [];
+  grass_eaterCells = [];
   timerG++;
   timer++;
+  timerPredator++;
   for (var i = 0; i < 80; i++) {
     for (var j = 0; j < 80; j++) {
       if (matrix[j][i] instanceof Grass) {
@@ -43,15 +47,19 @@ function draw() {
         fill("yellow");
         grassCells.push(matrix[j][i].chooseCellsE());
         grassCells = grassCells.filter((e) => e != null);
-      }
-      if (matrix[j][i] instanceof Empty) {
+      } else if (matrix[j][i] instanceof Empty) {
         fill("grey");
+      } else if (matrix[j][i] instanceof Predator){
+        fill("red");
+        grass_eaterCells.push(matrix[j][i].chooseCellsP());
+        grass_eaterCells = grass_eaterCells.filter((e) => e != null);
       }
       rect(j * side, i * side, side, side);
     }
   }
 
-  //timer = 10 -> create new grass
+  
+
   if (timerG == 5) {
     for (var a in grassCells) {
       var x = grassCells[a][0];
@@ -70,13 +78,21 @@ function draw() {
     }
     timer = 0;
   }
+  if (timerPredator == 7) {
+    for (var b in grass_eaterCells) {
+        var x = grass_eaterCells[b][0];
+        var y = grass_eaterCells[b][1];
+        matrix[y][x] = new Predator(x,y);
+    }
+    timerPredator = 0;
+  }
 }
 
 function randomNumber(max) {
   return Math.floor(Math.random() * max);
 }
 
-class Grass extends BasicCharacter {
+class BaseClass {
   constructor(x, y) {
     this.x = x;
     this.y = y;
@@ -91,6 +107,9 @@ class Grass extends BasicCharacter {
       [this.x + 1, this.y + 1],
     ];
   }
+}
+
+class Grass extends BaseClass {
   chooseCells() {
     var found = [];
     for (var i in this.directions) {
@@ -107,38 +126,10 @@ class Grass extends BasicCharacter {
   }
 }
 
-class BasicCharacter {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.directions = [
-          [this.x - 1, this.y - 1],
-          [this.x, this.y - 1],
-          [this.x + 1, this.y - 1],
-          [this.x - 1, this.y],
-          [this.x + 1, this.y],
-          [this.x - 1, this.y + 1],
-          [this.x, this.y + 1],
-          [this.x + 1, this.y + 1],
-        ];
-    }
-}
-
-class GrassEater {
+class GrassEater extends BaseClass {
   constructor(x, y, energy) {
-    this.x = x;
-    this.y = y;
+    super(x, y);
     this.energy = energy;
-    this.directions = [
-      [this.x - 1, this.y - 1],
-      [this.x, this.y - 1],
-      [this.x + 1, this.y - 1],
-      [this.x - 1, this.y],
-      [this.x + 1, this.y],
-      [this.x - 1, this.y + 1],
-      [this.x, this.y + 1],
-      [this.x + 1, this.y + 1],
-    ];
   }
 
   chooseCellsE() {
@@ -195,31 +186,41 @@ class GrassEater {
   }
 }
 
+class Predator extends GrassEater {
+  chooseCellsP() {
+    var foundPredator = [];
+    for (var j in this.directions) {
+      var x = this.directions[j][0];
+      var y = this.directions[j][1];
+      if (x >= 0 && x < matrix[0].length && y >= 0 && y < matrix.length) {
+        if (matrix[y][x] instanceof Grass) {
+          foundPredator.push(this.directions[j]);
+          this.energy = 10;
+        }
+      }
+    }
+
+    if (foundPredator.length == 0) {
+      for (var i in this.directions) {
+        var x = this.directions[i][0];
+        var y = this.directions[i][1];
+        if (x >= 0 && x < matrix[0].length && y >= 0 && y < matrix.length) {
+          if (matrix[y][x] instanceof GrassEater) {
+            foundGrassEater.push(this.directions[i]);
+          }
+        }
+      }
+      this.energy--;
+    }
+  }
+}
+
 class Empty {
   constructor(x, y) {
     this.x = x;
     this.y = y;
   }
 }
-
-class Predator extends BasicCharacter{
-    constructor(x, y, energy) {
-        this.x = x;
-        this.y = y;
-        this.energy = energy;
-        this.directions = [
-          [this.x - 1, this.y - 1],
-          [this.x, this.y - 1],
-          [this.x + 1, this.y - 1],
-          [this.x - 1, this.y],
-          [this.x + 1, this.y],
-          [this.x - 1, this.y + 1],
-          [this.x, this.y + 1],
-          [this.x + 1, this.y + 1],
-        ];
-      }
-}
-console.log(randomNumber(3));
 
 function fillArray() {
   var arr = [];
