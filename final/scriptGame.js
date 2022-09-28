@@ -18,6 +18,9 @@ function setup() {
       if (entity < 0.01) {
         arr.push(new GrassEater(j, i, 15));
       }
+      if (entity<0.3 && entity >0.001) {
+        arr.push(new Predator(j, i, 15));
+      }
     }
     matrix.push(arr);
   }
@@ -43,22 +46,38 @@ function draw() {
         fill("green");
         emptyCells.push(matrix[j][i].chooseCells());
         emptyCells = emptyCells.filter((e) => e != null);
-      } else if (matrix[j][i] instanceof GrassEater) {
-        fill("yellow");
-        grassCells.push(matrix[j][i].chooseCellsE());
-        grassCells = grassCells.filter((e) => e != null);
-      } else if (matrix[j][i] instanceof Empty) {
-        fill("grey");
-      } else if (matrix[j][i] instanceof Predator){
+      } 
+      else if (matrix[j][i] instanceof Predator){
         fill("red");
         grass_eaterCells.push(matrix[j][i].chooseCellsP());
         grass_eaterCells = grass_eaterCells.filter((e) => e != null);
       }
+      else if (matrix[j][i] instanceof GrassEater) {
+        fill("yellow");
+        grassCells.push(matrix[j][i].chooseCellsE());
+        grassCells = grassCells.filter((e) => e != null);
+      }
+      else if(matrix[j][i] instanceof Winter) {
+        fill("white");
+      }
+      else if(matrix[j][i] instanceof Fall) {
+        fill("orange");
+      }
+      else if (matrix[j][i] instanceof Empty) {
+        fill("grey");
+      } 
       rect(j * side, i * side, side, side);
     }
   }
-
-  
+  if (timerPredator == 7) {
+    for (var b in grass_eaterCells) {
+        var x = grass_eaterCells[b][0];
+        var y = grass_eaterCells[b][1];
+        matrix[y][x] = new Predator(x,y);
+        // console.log('creating object ',matrix[y][x])
+    }
+    timerPredator = 0;
+  }
 
   if (timerG == 5) {
     for (var a in grassCells) {
@@ -78,14 +97,7 @@ function draw() {
     }
     timer = 0;
   }
-  if (timerPredator == 7) {
-    for (var b in grass_eaterCells) {
-        var x = grass_eaterCells[b][0];
-        var y = grass_eaterCells[b][1];
-        matrix[y][x] = new Predator(x,y);
-    }
-    timerPredator = 0;
-  }
+
 }
 
 function randomNumber(max) {
@@ -206,15 +218,39 @@ class Predator extends GrassEater {
         var y = this.directions[i][1];
         if (x >= 0 && x < matrix[0].length && y >= 0 && y < matrix.length) {
           if (matrix[y][x] instanceof GrassEater) {
-            foundGrassEater.push(this.directions[i]);
+            foundPredator.push(this.directions[i]);
           }
         }
       }
       this.energy--;
     }
+    return random(foundPredator)
+  }
+}
+function handleFall(){
+  console.log(matrix)
+  for (var i = 0; i < 80; i++) {
+    for (var j = 0; j < 80; j++) {
+      if (matrix[j][i] instanceof Grass) {
+        console.log("creating new Fall")
+        matrix[j][i] = new Fall(j,i);
+      }
+    }
   }
 }
 
+function handleWinter()
+{
+  console.log(matrix)
+  for (var i = 0; i < 80; i++) {
+    for (var j = 0; j < 80; j++) {
+      if (matrix[j][i] instanceof Grass) {
+        console.log("creating new Winter")
+        matrix[j][i] = new Winter(j,i);
+      }
+    }
+  }
+}
 class Empty {
   constructor(x, y) {
     this.x = x;
@@ -222,10 +258,17 @@ class Empty {
   }
 }
 
-function fillArray() {
-  var arr = [];
-  arr.push(new Grass(0, 0));
-  arr.push(new GrassEater(1, 1));
-  arr.push(new EmptyCells(2, 2));
+class Winter extends BaseClass{
+
 }
-console.log(fillArray);
+class Fall extends BaseClass{
+
+}
+
+// function fillArray() {
+//   var arr = [];
+//   arr.push(new Grass(0, 0));
+//   arr.push(new GrassEater(1, 1));
+//   arr.push(new emptyCells(2, 2));
+// }
+// console.log(fillArray);
