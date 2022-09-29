@@ -11,14 +11,14 @@ function setup() {
         arr.push(new Empty(j, i));
       }
 
-      if (entity < 0.4 && entity > 0.01) {
+      if (entity < 0.4 && entity > 0.1) {
         arr.push(new Grass(j, i));
       }
 
-      if (entity < 0.01) {
+      if (entity < 0.1) {
         arr.push(new GrassEater(j, i, 15));
       }
-      if (entity<0.3 && entity >0.001) {
+      if (entity < 0.3 && entity > 0.1) {
         arr.push(new Predator(j, i, 15));
       }
     }
@@ -30,7 +30,6 @@ timer = 0;
 timerG = 0;
 timerPredator = 0;
 
-//check me zyshen pse sdel predatori
 function draw() {
   frameRate(30);
   var side = 10;
@@ -46,40 +45,35 @@ function draw() {
         fill("green");
         emptyCells.push(matrix[j][i].chooseCells());
         emptyCells = emptyCells.filter((e) => e != null);
-      } 
-      else if (matrix[j][i] instanceof Predator){
+      } else if (matrix[j][i] instanceof Predator) {
         fill("red");
         grass_eaterCells.push(matrix[j][i].chooseCellsP());
         grass_eaterCells = grass_eaterCells.filter((e) => e != null);
-      }
-      else if (matrix[j][i] instanceof GrassEater) {
+      } else if (matrix[j][i] instanceof GrassEater) {
         fill("yellow");
         grassCells.push(matrix[j][i].chooseCellsE());
         grassCells = grassCells.filter((e) => e != null);
-      }
-      else if(matrix[j][i] instanceof Winter) {
+      } else if (matrix[j][i] instanceof Winter) {
         fill("white");
-      }
-      else if(matrix[j][i] instanceof Fall) {
+      } else if (matrix[j][i] instanceof Fall) {
         fill("orange");
-      }
-      else if (matrix[j][i] instanceof Empty) {
+      } else if (matrix[j][i] instanceof Empty) {
         fill("grey");
-      } 
+      }
       rect(j * side, i * side, side, side);
     }
   }
-  if (timerPredator == 7) {
+  if (timerPredator == 5) {
     for (var b in grass_eaterCells) {
-        var x = grass_eaterCells[b][0];
-        var y = grass_eaterCells[b][1];
-        matrix[y][x] = new Predator(x,y);
-        // console.log('creating object ',matrix[y][x])
+      var x = grass_eaterCells[b][0];
+      var y = grass_eaterCells[b][1];
+      matrix[y][x] = new Predator(x, y);
+      // console.log('creating object ',matrix[y][x])
     }
     timerPredator = 0;
   }
 
-  if (timerG == 5) {
+  if (timerG == 7) {
     for (var a in grassCells) {
       var x = grassCells[a][0];
       var y = grassCells[a][1];
@@ -97,7 +91,6 @@ function draw() {
     }
     timer = 0;
   }
-
 }
 
 function randomNumber(max) {
@@ -185,7 +178,7 @@ class GrassEater extends BaseClass {
   }
 
   move() {
-    var targetCell = this.chooseCells();
+    var targetCell = this.chooseCellsE();
     var x = targetCell[0];
     var y = targetCell[1];
     var targetCellClone = this.chooseCellsE();
@@ -207,11 +200,22 @@ class Predator extends GrassEater {
       if (x >= 0 && x < matrix[0].length && y >= 0 && y < matrix.length) {
         if (matrix[y][x] instanceof Grass) {
           foundPredator.push(this.directions[j]);
-          this.energy = 10;
+          this.energy = 5;
         }
       }
     }
-
+    if (foundPredator.length == 0) {
+      for (var i in this.directions) {
+        var x = this.directions[i][0];
+        var y = this.directions[i][1];
+        if (x >= 0 && x < matrix[0].length && y >= 0 && y < matrix.length) {
+          if (matrix[y][x] instanceof Empty) {
+            foundPredator.push(this.directions[i]);
+          }
+        }
+      }
+      this.energy--;
+    }
     if (foundPredator.length == 0) {
       for (var i in this.directions) {
         var x = this.directions[i][0];
@@ -222,31 +226,50 @@ class Predator extends GrassEater {
           }
         }
       }
-      this.energy--;
+      this.energy = 10;
     }
-    return random(foundPredator)
+    return random(foundPredator);
+  }
+  move2() {
+    var targetCell = this.chooseCellsP();
+    var x = targetCell[0];
+    var y = targetCell[1];
+    matrix[this.y][this.x] = new Empty(this.x, this.y);
+    if (this.energy > 0) {
+      matrix[y][x] = new GrassEater(this.x, this.y, this.energy);
+    }
   }
 }
-function handleFall(){
-  console.log(matrix)
+
+function handleFall() {
+  alert("It's Fall!!!");
+  console.log(matrix);
   for (var i = 0; i < 80; i++) {
     for (var j = 0; j < 80; j++) {
       if (matrix[j][i] instanceof Grass) {
-        console.log("creating new Fall")
-        matrix[j][i] = new Fall(j,i);
+        console.log("creating new Fall");
+        matrix[j][i] = new Fall(j, i);
+      }
+      if (matrix[j][i] instanceof Winter) {
+        console.log("creating new Fall");
+        matrix[j][i] = new Fall(j, i);
       }
     }
   }
 }
 
-function handleWinter()
-{
-  console.log(matrix)
+function handleWinter() {
+  alert("It's Winter!!!");
+  console.log(matrix);
   for (var i = 0; i < 80; i++) {
     for (var j = 0; j < 80; j++) {
       if (matrix[j][i] instanceof Grass) {
-        console.log("creating new Winter")
-        matrix[j][i] = new Winter(j,i);
+        console.log("creating new Winter");
+        matrix[j][i] = new Winter(j, i);
+      }
+      if (matrix[j][i] instanceof Fall) {
+        console.log("creating new Winter");
+        matrix[j][i] = new Winter(j, i);
       }
     }
   }
@@ -258,12 +281,8 @@ class Empty {
   }
 }
 
-class Winter extends BaseClass{
-
-}
-class Fall extends BaseClass{
-
-}
+class Winter extends BaseClass {}
+class Fall extends BaseClass {}
 
 // function fillArray() {
 //   var arr = [];
@@ -272,3 +291,32 @@ class Fall extends BaseClass{
 //   arr.push(new emptyCells(2, 2));
 // }
 // console.log(fillArray);
+for (var i in messages) {
+  io.sockets.emit("send message", messages[i]);
+}
+
+// function main() {
+//   var socket = io();
+//   var chatDiv = document.getElementById("Chat");
+//   var input = document.getElementById("Nachricht");
+//   var button = document.getElementById("Senden");
+
+//   function handleSubmit(evt) {
+//     var val = input.value;
+//     if (val != "") {
+//       socket.emit("send message", val);
+//     }
+//   }
+//   button.onclick = handleSubmit;
+
+//   function handleMessage(msg) {
+//     var p = document.createElement("p");
+//     p.innerText = msg;
+//     chatDiv.appendChild(p);
+//     input.value = "";
+//   }
+
+//   socket.on("display message", handleMessage);
+// } // main closing bracket
+
+// window.onload = main;
